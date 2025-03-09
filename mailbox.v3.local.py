@@ -43,6 +43,7 @@ def check_and_install_modules():
                 else:
                     print("\033[1;31mInvalid input. Please enter 'y' or 'n'.\033[0m")
 
+        importlib.invalidate_caches()
         for module in missing_modules:
             importlib.import_module(module)
 
@@ -93,11 +94,18 @@ def convert_to_human(size_bytes):
     else:
         return f"{size_bytes} B"
 
-# Function to collect all mailboxes
+# Function to collect all mailboxes with progress indicator
 def collect_mailboxes(users, hide_empty=False):
     mailbox_data = []
-    for user in users:
+    total_users = len(users)
+
+    for i, user in enumerate(users, start=1):
         mailboxes = get_mailboxes(user)
+        
+        # Update progress indicator
+        sys.stdout.write(f"\rProcessing users: {i}/{total_users} \033[1;32m[{'#' * (i * 20 // total_users):<20}]\033[0m")
+        sys.stdout.flush()
+
         if not mailboxes:
             continue
 
@@ -112,6 +120,7 @@ def collect_mailboxes(users, hide_empty=False):
             size_human = convert_to_human(size_bytes)
             mailbox_data.append([user, email, domain, size_bytes, size_human])
 
+    print("\n")  # New line after progress bar
     return mailbox_data
 
 # Function to display output with sorted accounts
@@ -130,15 +139,7 @@ def display_results(mailbox_data, sort_by, top_x=None, output_file=None):
     else:
         print("\n\033[1;34mMailbox Sizes for All cPanel Users (Sorted by Account and Domain)\033[0m")
 
-        # ✅ Sorting logic
-        if sort_by == "mailbox":
-            account_totals = df.groupby("cPanel_User")["Size_Bytes"].max().reset_index()
-        elif sort_by == "domain":
-            account_totals = df.groupby(["cPanel_User", "Domain"])["Size_Bytes"].sum().reset_index()
-            account_totals = account_totals.groupby("cPanel_User")["Size_Bytes"].max().reset_index()
-        else:
-            account_totals = df.groupby("cPanel_User")["Size_Bytes"].sum().reset_index()
-
+        account_totals = df.groupby("cPanel_User")["Size_Bytes"].sum().reset_index()
         account_totals = account_totals.sort_values(by="Size_Bytes", ascending=False)
 
         for _, row in account_totals.iterrows():
@@ -161,7 +162,7 @@ def display_results(mailbox_data, sort_by, top_x=None, output_file=None):
                 print(f"\n\033[1;36m📂 Domain: {domain} (Total: {total_human})\033[0m")
                 print(tabulate(domain_df, headers="keys", tablefmt="grid", showindex=False))
 
-                # ✅ Properly formatted total row (without domain)
+                # ✅ Restored total row below each account
                 total_row = [["Total", "", "", f"{total_bytes:,}", total_human]]
                 print(tabulate(total_row, headers=["cPanel_User", "Email", "Domain", "Size_Bytes", "Size_Human"], tablefmt="grid"))
 
