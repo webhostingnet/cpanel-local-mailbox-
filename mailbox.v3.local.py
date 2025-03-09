@@ -8,12 +8,6 @@ Description: Fetches and displays mailbox sizes for all cPanel accounts using WH
 import sys
 import subprocess
 import importlib
-import json
-import argparse
-import pandas as pd
-import time
-import socket
-from tabulate import tabulate
 
 # Required modules list
 REQUIRED_MODULES = ["pandas", "tabulate"]
@@ -43,11 +37,20 @@ def check_and_install_modules():
                 else:
                     print("\033[1;31mInvalid input. Please enter 'y' or 'n'.\033[0m")
 
+        # Reload newly installed modules
         for module in missing_modules:
             importlib.import_module(module)
 
-# Run module check before anything else
+# Run module check before importing third-party modules
 check_and_install_modules()
+
+# Now it's safe to import third-party modules
+import json
+import argparse
+import pandas as pd
+import time
+import socket
+from tabulate import tabulate
 
 # Function to run WHM API commands locally
 def run_whmapi(command):
