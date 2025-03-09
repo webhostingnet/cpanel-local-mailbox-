@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Mailbox Size Report Script - Version V3
-Author: Your Name
 Description: Fetches and displays mailbox sizes for all cPanel accounts using WHM API.
 """
 
